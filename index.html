@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Ultra HD QR Generator</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+<style>
+
+    *{
+        box-sizing:border-box;
+    }
+
+    body{
+        margin:0;
+        padding:20px;
+        min-height:100vh;
+
+        display:flex;
+        justify-content:center;
+        align-items:center;
+
+        background:#f5f7fa;
+
+        font-family:Segoe UI,Roboto,sans-serif;
+    }
+
+    .card{
+        width:100%;
+        max-width:520px;
+
+        background:white;
+
+        padding:30px;
+
+        border-radius:20px;
+
+        box-shadow:0 10px 40px rgba(0,0,0,0.12);
+
+        text-align:center;
+    }
+
+    h2{
+        margin-top:0;
+        color:#202124;
+    }
+
+    input[type="text"]{
+        width:100%;
+
+        padding:14px;
+
+        margin:12px 0;
+
+        border:1px solid #dadce0;
+
+        border-radius:10px;
+
+        font-size:16px;
+    }
+
+    .file-input{
+        text-align:left;
+
+        margin:18px 0;
+
+        color:#5f6368;
+
+        font-size:14px;
+    }
+
+    canvas{
+        width:100% !important;
+        height:auto !important;
+
+        margin-top:20px;
+
+        border-radius:14px;
+
+        border:1px solid #eee;
+
+        image-rendering:pixelated;
+        image-rendering:crisp-edges;
+    }
+
+    button{
+        width:100%;
+
+        padding:15px;
+
+        margin-top:18px;
+
+        border:none;
+
+        border-radius:12px;
+
+        background:#34a853;
+
+        color:white;
+
+        font-size:16px;
+
+        font-weight:bold;
+
+        cursor:pointer;
+    }
+
+    button:active{
+        transform:scale(0.98);
+    }
+
+    #status{
+        margin-top:10px;
+
+        min-height:20px;
+
+        color:#1a73e8;
+
+        font-size:13px;
+    }
+
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <h2>Ultra HD QR Generator</h2>
+
+    <input
+        type="text"
+        id="qr-text"
+        placeholder="Enter URL or Text"
+        oninput="generateQR()"
+    >
+
+    <div class="file-input">
+
+        <label>Upload Logo:</label><br><br>
+
+        <input
+            type="file"
+            id="logo-upload"
+            accept="image/*"
+            onchange="generateQR()"
+        >
+
+    </div>
+
+    <canvas id="qr-canvas"></canvas>
+
+    <div id="status"></div>
+
+    <button onclick="downloadQR()">
+
+        Download Ultra HD PNG
+
+    </button>
+
+</div>
+
+<script>
+
+function generateQR(){
+
+    const text =
+        document.getElementById('qr-text').value
+        || 'https://hadrielcs.github.io';
+
+    const canvas =
+        document.getElementById('qr-canvas');
+
+    const logoUpload =
+        document.getElementById('logo-upload');
+
+    const status =
+        document.getElementById('status');
+
+    // TRUE 4K QR
+
+    const renderSize = 4096;
+
+    canvas.width = renderSize;
+    canvas.height = renderSize;
+
+    const ctx = canvas.getContext('2d');
+
+    // KEEP QR SHARP
+
+    ctx.imageSmoothingEnabled = false;
+
+    // GENERATE QR
+
+    new QRious({
+
+        element: canvas,
+
+        value: text,
+
+        size: renderSize,
+
+        level: 'H',
+
+        foreground: '#000000',
+
+        background: '#ffffff'
+
+    });
+
+    // ADD LOGO
+
+    if(logoUpload.files && logoUpload.files[0]){
+
+        status.innerText = 'Processing Ultra HD Logo...';
+
+        const reader = new FileReader();
+
+        reader.onload = function(e){
+
+            const img = new Image();
+
+            img.onload = function(){
+
+                // PORTRAIT LOGO SIZE
+
+                const logoWidth = renderSize * 0.18;
+
+                const logoHeight = logoWidth * 1.45;
+
+                // CENTER POSITION
+
+                const centerX =
+                    (renderSize - logoWidth) / 2;
+
+                const centerY =
+                    (renderSize - logoHeight) / 2;
+
+                // SAFE WHITE AREA
+
+                const padding = renderSize * 0.03;
+
+                const radius = 70;
+
+                // WHITE BACKGROUND
+
+                ctx.fillStyle = '#ffffff';
+
+                ctx.beginPath();
+
+                ctx.roundRect(
+
+                    centerX - padding,
+                    centerY - padding,
+
+                    logoWidth + (padding * 2),
+                    logoHeight + (padding * 2),
+
+                    radius
+
+                );
+
+                ctx.fill();
+
+                // HIGH QUALITY LOGO
+
+                ctx.imageSmoothingEnabled = true;
+
+                ctx.imageSmoothingQuality = 'high';
+
+                // DRAW LOGO
+
+                ctx.drawImage(
+
+                    img,
+
+                    centerX,
+                    centerY,
+
+                    logoWidth,
+                    logoHeight
+
+                );
+
+                status.innerText =
+                    'Ultra HD QR Ready!';
+            };
+
+            img.src = e.target.result;
+        };
+
+        reader.readAsDataURL(
+            logoUpload.files[0]
+        );
+
+    }else{
+
+        status.innerText =
+            'Ultra HD QR Ready!';
+    }
+}
+
+function downloadQR(){
+
+    const canvas =
+        document.getElementById('qr-canvas');
+
+    const link =
+        document.createElement('a');
+
+    link.href =
+        canvas.toDataURL('image/png');
+
+    link.download =
+        'Ultra_HD_QR.png';
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+}
+
+window.onload = generateQR;
+
+</script>
+
+</body>
+</html>
